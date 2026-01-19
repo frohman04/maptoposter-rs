@@ -1,15 +1,17 @@
+mod location;
 mod theme;
 
+use crate::location::Location;
 use crate::theme::Theme;
 use clap::{crate_name, crate_version};
-use tracing::Level;
+use tracing::{Level, info};
 
 fn main() {
     let ansi_enabled = fix_ansi_term();
 
     tracing_subscriber::fmt()
         .with_ansi(ansi_enabled)
-        .with_max_level(Level::DEBUG)
+        .with_max_level(Level::INFO)
         .init();
 
     let matches = clap::Command::new(crate_name!())
@@ -38,6 +40,22 @@ fn main() {
                         .help("Country name"),
                 )
                 .arg(
+                    clap::Arg::new("state")
+                        .long("state")
+                        .short('s')
+                        .required(false)
+                        .num_args(1)
+                        .help("Optional state/province name"),
+                )
+                .arg(
+                    clap::Arg::new("postal-code")
+                        .long("postal-code")
+                        .short('p')
+                        .required(false)
+                        .num_args(1)
+                        .help("Optional postal code"),
+                )
+                .arg(
                     clap::Arg::new("theme")
                         .long("theme")
                         .short('t')
@@ -62,6 +80,14 @@ fn main() {
 
     match matches.subcommand() {
         Some(("list-themes", _)) => list_themes(),
+        Some(("generate", sub_match)) => create_poster(
+            sub_match.get_one::<String>("city").unwrap().clone(),
+            sub_match.get_one::<String>("country").unwrap().clone(),
+            sub_match.get_one::<String>("state").cloned(),
+            sub_match.get_one::<String>("postal-code").cloned(),
+            sub_match.get_one::<String>("theme").unwrap().clone(),
+            *sub_match.get_one::<u16>("distance").unwrap(),
+        ),
         Some((x, _)) => panic!("Unknown subcommand: {}", x),
         None => panic!("No subcommand specified!"),
     }
@@ -95,9 +121,21 @@ pub fn list_themes() {
         })
         .for_each(|(name, display_name, description)| {
             println!("  {} ({})", display_name, name);
-            match description {
-                Some(desc) => println!("    {}", desc),
-                None => (),
+            if let Some(d) = description {
+                println!("    {}", d);
             }
         });
+}
+
+pub fn create_poster(
+    city: String,
+    country: String,
+    state: Option<String>,
+    postal_code: Option<String>,
+    _theme_name: String,
+    _distance: u16,
+) {
+    let location = Location::from_name(city, country, state, postal_code);
+    info!("✓ Found: {}", location.display_name);
+    info!("✓ Coordinates: {}, {}", location.lat, location.lon);
 }
