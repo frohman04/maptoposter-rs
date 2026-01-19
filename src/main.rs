@@ -1,3 +1,6 @@
+mod theme;
+
+use crate::theme::Theme;
 use clap::{crate_name, crate_version};
 use tracing::Level;
 
@@ -56,6 +59,12 @@ fn main() {
         )
         .subcommand_required(true)
         .get_matches();
+
+    match matches.subcommand() {
+        Some(("list-themes", _)) => list_themes(),
+        Some((x, _)) => panic!("Unknown subcommand: {}", x),
+        None => panic!("No subcommand specified!"),
+    }
 }
 
 #[cfg(target_os = "windows")]
@@ -66,4 +75,29 @@ fn fix_ansi_term() -> bool {
 #[cfg(not(target_os = "windows"))]
 fn fix_ansi_term() -> bool {
     true
+}
+
+/// List all available themes with descriptions.
+pub fn list_themes() {
+    let mut themes = Theme::get_available_names();
+    if themes.is_empty() {
+        panic!("No themes found!");
+    }
+
+    println!("Available themes:");
+    println!("{}", "-".repeat(60));
+    themes.sort();
+    themes
+        .iter()
+        .map(|name| match Theme::get_by_name(name) {
+            Ok(theme) => (name, theme.name, Some(theme.description)),
+            Err(_) => (name, name.clone(), None),
+        })
+        .for_each(|(name, display_name, description)| {
+            println!("  {} ({})", display_name, name);
+            match description {
+                Some(desc) => println!("    {}", desc),
+                None => (),
+            }
+        });
 }
