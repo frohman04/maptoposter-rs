@@ -4,8 +4,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
-static THEME_DIR: &str = "themes";
-
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Theme {
@@ -26,8 +24,8 @@ pub struct Theme {
 
 impl Theme {
     /// Scan the themes directory and return a list of available theme names.
-    pub fn get_available_names() -> Vec<String> {
-        let path = Path::new(THEME_DIR);
+    pub fn get_available_names(theme_dir: &str) -> Vec<String> {
+        let path = Path::new(theme_dir);
         if !path.exists() {
             fs::create_dir_all(path).unwrap();
             Vec::new()
@@ -52,8 +50,8 @@ impl Theme {
     }
 
     /// Get a Theme struct by its name.
-    pub fn get_by_name(name: &str) -> serde_json::error::Result<Theme> {
-        let path: PathBuf = [THEME_DIR, format!("{}.json", name).as_str()]
+    pub fn get_by_name(name: &str, theme_dir: &str) -> serde_json::error::Result<Theme> {
+        let path: PathBuf = [theme_dir, format!("{}.json", name).as_str()]
             .iter()
             .collect();
         let file = File::open(path).unwrap();

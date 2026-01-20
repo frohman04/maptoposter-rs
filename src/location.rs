@@ -10,21 +10,17 @@ pub struct Location {
 
 impl Location {
     pub fn from_name(
-        city: String,
-        country: String,
-        state: Option<String>,
-        postal_code: Option<String>,
+        city: &str,
+        country: &str,
+        state: &Option<String>,
+        postal_code: &Option<String>,
     ) -> Location {
-        let mut params = vec![
-            ("city", city),
-            ("country", country),
-            ("format", "jsonv2".to_string()),
-        ];
+        let mut params = vec![("city", city), ("country", country), ("format", "jsonv2")];
         if let Some(s) = state {
-            params.push(("state", s.clone()));
+            params.push(("state", s));
         }
         if let Some(pc) = postal_code {
-            params.push(("postalcode", pc.clone()));
+            params.push(("postalcode", pc));
         }
 
         let resp = ClientBuilder::new()
